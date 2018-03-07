@@ -46,15 +46,17 @@ function updateMenu(list, url, title) {
   const menu = getMenu(url) || createMenu(url);
   const itemCount = menu.menuItems.length;
 
-  for (let i = 0; i < itemCount; ++i) {
-    menu.removeMenuItem(i);
-  }
-
-  list.forEach(function(item) {
-    const menuItem = menu.appendMenuItem(item.id, item.title);
+  list.forEach(function(item, index) {
+    const menuItem = menu.menuItems[index] || menu.appendMenuItem(item.id, item.title);
+    menu.identifier = item.id;
+    menu.title = item.title;
     menuItem.command = ACTIVATE_COMMAND;
     menuItem.checkedState = item.activated ? menuItem.CHECKED : menuItem.UNCHECKED;
   });
+
+  for (let i = list.length; i < itemCount; ++i) {
+    menu.removeMenuItem(i);
+  }
 
   return menu;
 }
