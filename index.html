@@ -31,8 +31,10 @@ function handleCommand(event) {
 }
 
 function handleActivate(event) {
+  const tab = event.target.activeTab || event.target;
+
   updateToolbarItems(null);
-  event.target.page.dispatchMessage('refreshvideos');
+  tab.page.dispatchMessage('refreshvideos');
 }
 
 function update(list, url, title) {
