@@ -1,0 +1,103 @@
+<!doctype html>
+<html>
+<head>
+<title>Little Bow PiP</title>
+<script>
+
+const ACTIVATE_FIRST_COMMAND = 'activatefirst';
+const ACTIVATE_COMMAND = 'activate';
+
+function handleMessage(event) {
+  switch (event.name) {
+    case 'update':
+      update(event.message, event.target.url, event.target.title);
+      break;
+  }
+}
+
+function handleCommand(event) {
+  switch (event.command) {
+    case ACTIVATE_COMMAND:
+      activatePictureInPicture(event.target.identifier);
+      break;
+    case ACTIVATE_FIRST_COMMAND:
+      const menu = getMenu(getCurrentUrl());
+      const menuItem = menu && menu.menuItems[0];
+      if (menuItem) {
+        activatePictureInPicture(menuItem.identifier);
+      }
+      break;
+  }
+}
+
+function handleActivate(event) {
+  updateToolbarItems(null);
+  event.target.page.dispatchMessage('refreshvideos');
+}
+
+function update(list, url, title) {
+  const menu = url ? updateMenu(list, url, title) : null;
+  updateToolbarItems(menu);
+}
+
+function updateMenu(list, url, title) {
+  const menu = getMenu(url) || createMenu(url);
+  const itemCount = menu.menuItems.length;
+
+  for (let i = 0; i < itemCount; ++i) {
+    menu.removeMenuItem(i);
+  }
+
+  list.forEach(function(item) {
+    const menuItem = menu.appendMenuItem(item.id, item.title);
+    menuItem.command = ACTIVATE_COMMAND;
+    menuItem.checkedState = item.activated ? menuItem.CHECKED : menuItem.UNCHECKED;
+  });
+
+  return menu;
+}
+
+function updateToolbarItems(menu) {
+  const itemCount = menu ? menu.menuItems.length : 0;
+  const toolbarItems = getToolbarItems();
+
+  toolbarItems.forEach(function(item) {
+    item.menu = menu;
+    item.command = itemCount === 1 ? ACTIVATE_FIRST_COMMAND : null;
+    item.disabled = itemCount === 0;
+  });
+}
+
+function activatePictureInPicture(id) {
+  dispatch('activatepip', id);
+}
+
+function getMenu(identifier) {
+  return safari.extension.menus.filter(function(menu) { return menu.identifier === identifier })[0];
+}
+
+function createMenu(identifier) {
+  return safari.extension.createMenu(identifier);
+}
+
+function getCurrentUrl() {
+  return safari.application.activeBrowserWindow.activeTab.url;
+}
+
+function dispatch(name, message) {
+  return safari.application.activeBrowserWindow.activeTab.page.dispatchMessage(name, message);
+}
+
+function getToolbarItems() {
+  return safari.extension.toolbarItems.filter(function(item) { return item.identifier === 'littlebowpip' });
+}
+
+safari.application.addEventListener('message', handleMessage, false);
+safari.application.addEventListener('command', handleCommand, true);
+safari.application.addEventListener('activate', handleActivate, true);
+
+</script>
+</head>
+<body>
+</body>
+</html>
